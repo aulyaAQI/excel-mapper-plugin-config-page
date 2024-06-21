@@ -45,7 +45,7 @@ onMounted(() => {
     console.log({config});
     hasConfig.value = !isEmpty(config);
 
-    if (hasConfig) {
+    if (hasConfig.value) {
       const destinationApp = JSON.parse(config.destinationApp);
       const sourceAttachmentField = JSON.parse(config.sourceAttachmentField);
       const mapperList = JSON.parse(config.mapperList);
@@ -85,43 +85,62 @@ watch(destinationApp, (newVal, oldVal) => {
 </script>
 
 <template>
-  <div class="container-fluid main-container">
+  <div class="main-container container">
     <div class="row mb-3">
       <div class="col">
         <div class="card mb-3">
           <div class="card-header">Plugin Settings</div>
           <div class="card-body">
             <p>
-              This plugin is intended to be used to import data from an Excel file to a Kintone app. The plugin will map the data from the Excel file to the fields in the Kintone app.
+              This plugin is intended to be used to import data from an Excel file to a Kintone app. The plugin will map the data from the Excel file
+              to the fields in the Kintone app.
             </p>
+            <p>Important notes:</p>
+            <ul>
+              <li>
+                You need to create a new field in the destination app to store the (source's Record Number) from the source app (preferably a lookup
+                field).
+              </li>
+              <li>You need to create a new field in the destination app to store the reference (Excel's file name).</li>
+              <li>You need to have a field in the source app to store the Excel file as an attachment.</li>
+              <li>The uploaded file should be in .xlsx format.</li>
+            </ul>
+            <p>Steps to use the plugin:</p>
+            <ol>
+              <li>Select the destination app where the data will be imported.</li>
+              <li>Select the attachment field in the source app where the Excel files will be uploaded.</li>
+              <li>
+                Select the reference field in the destination app to store the ID of source app. It is recommended for you to create a new field in
+                the destination app to store the reference from the source app (preferably a lookup field).
+              </li>
+              <li>Select the reference field in the destination app that will be used to store the reference from the Excel file.</li>
+              <li>Upload an Excel file template that will be used to map the fields in the Excel file to the fields in the destination app.</li>
+              <li>Map the fields from the Excel file to the fields in the destination app. For each field, specify the following:</li>
+              <ul>
+                <li>Map to field in the destination app.</li>
+                <li>Map from cells in the Excel file.</li>
+                <li>
+                  For table fields, specify the Map From and Map Until fields. Note that for the Map Until field, the value should be range of cells
+                  right below the Map From cell (in the same row).
+                </li>
+                <li>
+                  For value from excel's cell that needs to be split, check the Split checkbox and specify the Start Line and End Line. The split will
+                  be based on the new line character.
+                </li>
+                <li>Preview the data that will be imported to the destination app according to the Excel file you have uploaded.</li>
+                <li>Click the "+" button to add a new mapper. Click the "-" button to remove the mapper.</li>
+              </ul>
+              <li>Click the "Save" button to save the configuration.</li>
+            </ol>
             <p>
-              Steps to use the plugin:
-              <ol>
-                <li>Select the destination app where the data will be imported.</li>
-                <li>Select the attachment field in the source app where the Excel files will be uploaded.</li>
-                <li>Select the reference field in the destination app to store the ID of source app. It is recommended for you to create a new field in the destination app to store the reference from the source app (preferably a lookup field).</li>
-                <li>Select the reference field in the destination app that will be used to store the reference from the Excel file.</li>
-                <li>Upload an Excel file template that will be used to map the fields in the Excel file to the fields in the destination app.</li>
-                <li>Map the fields from the Excel file to the fields in the destination app. For each field, specify the following:</li>
-                  <ul>
-                    <li>Map to field in the destination app.</li>
-                    <li>Map from cells in the Excel file.</li>
-                    <li>For table fields, specify the Map From and Map Until fields. Note that for the Map Until field, the value should be range of cells right below the Map From cell (in the same row).</li>
-                    <li>For value from excel's cell that needs to be split, check the Split checkbox and specify the Start Line and End Line. The split will be based on the new line character.</li>
-                    <li>Preview the data that will be imported to the destination app according to the Excel file you have uploaded.</li>
-                    <li>Click the "+" button to add a new mapper. Click the "-" button to remove the mapper.</li>
-                  </ul>
-                <li>Click the "Save" button to save the configuration.</li>
-              </ol>
-            </p>
-            <p>
-              The plugin will then be available in the source app to import the data from the Excel files to the destination app according to the configuration.
+              The plugin will then be available in the source app to import the data from the Excel files to the destination app according to the
+              configuration.
             </p>
           </div>
           <div class="card-footer">
             <div d-flex flex-row>
               <button type="button" class="btn btn-primary action-button" @click.prevent="configStore.saveConfig()">Save</button>
-              <button type="button" class="btn btn-info action-button ms-2" @click.prevent="configStore.toggleEditMode">
+              <button type="button" class="btn btn-info action-button ms-2" @click.prevent="configStore.toggleEditMode" v-if="hasConfig">
                 {{ configStore.editMode ? 'Cancel Edit' : 'Edit' }}
               </button>
               <button type="button" class="btn btn-secondary action-button ms-2" @click.prevent="() => history.back()">Cancel</button>
@@ -173,7 +192,7 @@ watch(destinationApp, (newVal, oldVal) => {
                   trackBy="code"
                   label="label"
                   :loading="fields.isLoading"
-                  :disabled="fields.isLoading || (!editMode && hasConfig)"
+                  :disabled="fields.isLoading || (!editMode && hasConfig) || !destinationApp?.appId"
                   :showLabels="false"
                 ></Multiselect>
               </div>
@@ -202,7 +221,7 @@ watch(destinationApp, (newVal, oldVal) => {
                   trackBy="code"
                   label="label"
                   :loading="fields.isLoading"
-                  :disabled="fields.isLoading || (!editMode && hasConfig)"
+                  :disabled="fields.isLoading || (!editMode && hasConfig) || !destinationApp?.appId"
                   :showLabels="false"
                 ></Multiselect>
               </div>
@@ -274,102 +293,106 @@ watch(destinationApp, (newVal, oldVal) => {
       </div>
     </div>
   </div>
-  <div class="container-fluid container-table">
-    <div class="row" v-if="destinationApp?.appId">
-      <div class="col">
-        <div class="table-responsive table-container">
-          <table class="table table-bordered">
-            <thead>
-              <tr>
-                <th scope="col" class="sticky-col sticky-col-1">Map to Field</th>
-                <th scope="col">Field Code</th>
-                <th scope="col">Field Type</th>
-                <th scope="col" class="text-center">Subtable</th>
-                <th scope="col">Map From</th>
-                <th scope="col">Map Until</th>
-                <th scope="col" class="text-center">Split</th>
-                <th scope="col">Start Line</th>
-                <th scope="col">End Line</th>
-                <th scope="col">Preview</th>
-                <th scope="col" class="col-hollow"></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(mapper, mapperIndex) in mapperList" :key="mapperIndex">
-                <td class="sticky-col sticky-col-1">
-                  <Multiselect
-                    v-model="mapper.mapTo"
-                    :options="fields.options"
-                    trackBy="code"
-                    label="label"
-                    :loading="fields.isLoading"
-                    :disabled="fields.isLoading || (!editMode && hasConfig)"
-                    :showLabels="false"
-                  ></Multiselect>
-                </td>
-                <td>
-                  <input class="form-control" type="text" :value="mapper.mapTo?.code" disabled />
-                </td>
-                <td>
-                  <input class="form-control" type="text" :value="mapper.mapTo?.type" disabled />
-                </td>
-                <td class="text-center">
-                  <input class="form-check-input big-checkbox" type="checkbox" v-model="mapper.isTableField" disabled />
-                </td>
-                <td>
-                  <Multiselect
-                    v-model="mapper.mapFrom"
-                    :options="excelTemplateCells.options"
-                    trackBy="cellAddress"
-                    label="label"
-                    :loading="excelTemplateCells.isLoading"
-                    :disabled="excelTemplateCells.isLoading || isEmptyExcelTemplateCells || (!editMode && hasConfig)"
-                    :showLabels="false"
-                  ></Multiselect>
-                </td>
-                <td>
-                  <Multiselect
-                    v-model="mapper.mapFromUntil"
-                    :options="excelTemplateCells.options"
-                    trackBy="cellAddress"
-                    label="label"
-                    :loading="excelTemplateCells.isLoading"
-                    :disabled="excelTemplateCells.isLoading || isEmptyExcelTemplateCells || !mapper.isTableField || (!editMode && hasConfig)"
-                    :showLabels="false"
-                  ></Multiselect>
-                </td>
-                <td class="text-center">
-                  <input
-                    class="form-check-input big-checkbox"
-                    type="checkbox"
-                    v-model="mapper.split"
-                    :disabled="!mapper.mapFrom?.cellAddress || (!editMode && hasConfig)"
-                  />
-                </td>
-                <td>
-                  <input class="form-control" type="number" v-model="mapper.startLine" :disabled="!mapper.split || (!editMode && hasConfig)" />
-                </td>
-                <td>
-                  <input class="form-control" type="number" v-model="mapper.endLine" :disabled="!mapper.split || (!editMode && hasConfig)" />
-                </td>
-                <td>
-                  <textarea class="form-control" rows="10" cols="50" :value="configStore.getPreview(mapper)" disabled></textarea>
-                </td>
-                <td class="col-hollow">
-                  <div class="d-flex flex-row text-center" style="text-align: end">
-                    <a class="action" data-toggle="tooltip" data-placement="top" title="Add mapper">
-                      <font-awesome-icon icon="fa-solid fa-circle-plus" size="lg" @click.prevent="configStore.addMapper()" />
-                    </a>
-                    <a class="action" data-toggle="tooltip" data-placement="top" title="Remove mapper">
-                      <font-awesome-icon icon="fa-solid fa-circle-minus" size="lg" @click.prevent="configStore.removeMapper(mapperIndex)" />
-                    </a>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+  <div class="container-table container" v-if="destinationApp?.appId">
+    <div class="table-wrapper">
+      <table class="table table-bordered">
+        <colgroup>
+          <col span="3" class="standard-size-col" />
+          <col class="very-small-col" />
+          <col span="2" class="medium-size-col" />
+          <col class="very-small-col" />
+          <col span="2" class="medium-size-col" />
+          <col class="large-size-col" />
+        </colgroup>
+        <thead>
+          <tr>
+            <th scope="col" class="sticky-col sticky-col-1">Map to Field</th>
+            <th scope="col">Field Code</th>
+            <th scope="col">Field Type</th>
+            <th scope="col" class="text-center">Subtable</th>
+            <th scope="col">Map From</th>
+            <th scope="col">Map Until</th>
+            <th scope="col" class="text-center">Split</th>
+            <th scope="col">Start Line</th>
+            <th scope="col">End Line</th>
+            <th scope="col">Preview</th>
+            <th scope="col" class="col-hollow"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(mapper, mapperIndex) in mapperList" :key="mapperIndex">
+            <td class="sticky-col sticky-col-1">
+              <Multiselect
+                v-model="mapper.mapTo"
+                :options="fields.options"
+                trackBy="code"
+                label="label"
+                :loading="fields.isLoading"
+                :disabled="fields.isLoading || (!editMode && hasConfig)"
+                :showLabels="false"
+              ></Multiselect>
+            </td>
+            <td>
+              <input class="form-control" type="text" :value="mapper.mapTo?.code" disabled />
+            </td>
+            <td>
+              <input class="form-control" type="text" :value="mapper.mapTo?.type" disabled />
+            </td>
+            <td class="text-center">
+              <input class="form-check-input big-checkbox" type="checkbox" v-model="mapper.isTableField" disabled />
+            </td>
+            <td>
+              <Multiselect
+                v-model="mapper.mapFrom"
+                :options="excelTemplateCells.options"
+                trackBy="cellAddress"
+                label="label"
+                :loading="excelTemplateCells.isLoading"
+                :disabled="excelTemplateCells.isLoading || isEmptyExcelTemplateCells || (!editMode && hasConfig)"
+                :showLabels="false"
+              ></Multiselect>
+            </td>
+            <td>
+              <Multiselect
+                v-model="mapper.mapFromUntil"
+                :options="excelTemplateCells.options"
+                trackBy="cellAddress"
+                label="label"
+                :loading="excelTemplateCells.isLoading"
+                :disabled="excelTemplateCells.isLoading || isEmptyExcelTemplateCells || !mapper.isTableField || (!editMode && hasConfig)"
+                :showLabels="false"
+              ></Multiselect>
+            </td>
+            <td class="text-center">
+              <input
+                class="form-check-input big-checkbox"
+                type="checkbox"
+                v-model="mapper.split"
+                :disabled="!mapper.mapFrom?.cellAddress || (!editMode && hasConfig)"
+              />
+            </td>
+            <td>
+              <input class="form-control" type="number" v-model="mapper.startLine" :disabled="!mapper.split || (!editMode && hasConfig)" />
+            </td>
+            <td>
+              <input class="form-control" type="number" v-model="mapper.endLine" :disabled="!mapper.split || (!editMode && hasConfig)" />
+            </td>
+            <td>
+              <textarea class="form-control" rows="8" cols="28" :value="configStore.getPreview(mapper)" disabled></textarea>
+            </td>
+            <td class="col-hollow">
+              <div class="d-flex flex-row text-center" style="text-align: end">
+                <a class="action" data-toggle="tooltip" data-placement="top" title="Add mapper">
+                  <font-awesome-icon icon="fa-solid fa-circle-plus" size="lg" @click.prevent="configStore.addMapper()" />
+                </a>
+                <a class="action" data-toggle="tooltip" data-placement="top" title="Remove mapper">
+                  <font-awesome-icon icon="fa-solid fa-circle-minus" size="lg" @click.prevent="configStore.removeMapper(mapperIndex)" />
+                </a>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </template>
@@ -416,55 +439,19 @@ watch(destinationApp, (newVal, oldVal) => {
 }
 
 input[type='number'] {
-  width: 50px;
+  /* width: 50px; */
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  height: 80vh;
 }
 
 table {
   /* table-layout: fixed; */
   min-width: 2000px;
-}
-
-td:first-child,
-td:nth-child(2),
-td:nth-child(3),
-td:nth-child(5),
-td:nth-child(6) {
-  width: 200px !important;
-}
-
-th:first-child,
-th:nth-child(2),
-th:nth-child(3),
-th:nth-child(5),
-th:nth-child(6) {
-  width: 200px !important;
-}
-
-td:nth-child(4),
-td:nth-child(7),
-td:nth-child(8),
-td:nth-child(9) {
-  width: 30px !important;
-}
-
-th:nth-child(4),
-th:nth-child(7),
-th:nth-child(8),
-th:nth-child(9) {
-  width: 30px !important;
-}
-
-td:last-child {
-  width: 250px !important;
-}
-
-th:last-child {
-  width: 250px !important;
-}
-
-.table-container {
-  overflow-x: auto;
-  position: relative;
+  /* transform: scale(2); */
+  word-wrap: break-word;
 }
 
 .sticky-col {
@@ -472,21 +459,27 @@ th:last-child {
   position: sticky;
   left: 0;
   background-color: white;
-  z-index: 3;
+  z-index: 2;
 }
 
 .sticky-col-1 {
   left: 0;
-  z-index: 4;
+  z-index: 2;
 }
 
-.main-container {
-  max-width: 1300px;
-  margin-left: 0px;
+th:not(:last-child) {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  background-color: gray !important;
+  z-index: 2;
 }
 
-.container-table {
-  max-width: 1300px;
-  margin-left: 0px;
+th:first-child {
+  z-index: 3;
+}
+
+.standard-size-col {
+  width: 200px;
 }
 </style>

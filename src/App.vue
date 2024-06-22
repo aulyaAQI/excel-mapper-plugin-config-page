@@ -184,6 +184,7 @@ watch(destinationApp, (newVal, oldVal) => {
             </div>
             <div class="row mb-3">
               <div class="col-sm-6">
+                <!-- :disabled="fields.isLoading || (!editMode && hasConfig) || !destinationApp?.appId" -->
                 <label for="select-destinationReference" class="form-label">Destination Reference Holder (Key)</label>
                 <Multiselect
                   id="select-destinationReference"
@@ -192,8 +193,9 @@ watch(destinationApp, (newVal, oldVal) => {
                   trackBy="code"
                   label="label"
                   :loading="fields.isLoading"
-                  :disabled="fields.isLoading || (!editMode && hasConfig) || !destinationApp?.appId"
                   :showLabels="false"
+                  placeholder="This field will be added to destination application."
+                  disabled
                 ></Multiselect>
               </div>
               <div class="col-sm-6">
@@ -221,8 +223,9 @@ watch(destinationApp, (newVal, oldVal) => {
                   trackBy="code"
                   label="label"
                   :loading="fields.isLoading"
-                  :disabled="fields.isLoading || (!editMode && hasConfig) || !destinationApp?.appId"
                   :showLabels="false"
+                  placeholder="This field will be added to destination application."
+                  disabled
                 ></Multiselect>
               </div>
               <div class="col-sm-6">

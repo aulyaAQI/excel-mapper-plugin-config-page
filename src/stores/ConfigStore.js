@@ -1,5 +1,6 @@
 import {defineStore} from 'pinia';
 import {useExcelStore} from './ExcelStore';
+import {generateClient} from '@/helper/kintone';
 
 export function getDefaultMapObject() {
   return {
@@ -56,7 +57,39 @@ export const useConfigStore = defineStore({
         parentTable: field.parentTable,
       }));
     },
-    saveConfig() {
+    async addLookupField(destinationAppId) {
+      const client = generateClient();
+      console.log('yo');
+
+      if (!destinationAppId) return;
+
+      // eslint-disable-next-line no-undef
+      const sourceAppId = typeof kintone !== 'undefined' ? kintone.app.getId() : 6;
+
+      console.log({destinationAppId, sourceAppId});
+      const addLookupField = await client.app.addFormFields({
+        app: destinationAppId,
+        properties: {
+          Source_Record_Number_Plugin_Excel_Mapper_Generated: {
+            label: 'Source Record Number (plugin Excel Mapper generated)',
+            code: 'Source_Record_Number_Plugin_Excel_Mapper_Generated',
+            type: 'SINGLE_LINE_TEXT',
+          },
+        },
+      });
+
+      const deployApp = await client.app.deployApp({
+        apps: [
+          {
+            app: destinationAppId,
+          },
+        ],
+      });
+
+      console.log({addLookupField});
+      console.log({deployApp});
+    },
+    async saveConfig() {
       if (!this.destinationApp?.appId) {
         alert('Please select the destination app');
         return;
@@ -67,15 +100,18 @@ export const useConfigStore = defineStore({
         return;
       }
 
-      if (!this.destinationReferenceHolder?.code) {
-        alert('Please select the destination reference holder');
-        return;
-      }
+      // if (!this.destinationReferenceHolder?.code) {
+      //   alert('Please select the destination reference holder');
+      //   return;
+      // }
 
-      if (!this.destinationExcelNameHolder?.code) {
-        alert('Please select the destination excel name holder');
-        return;
-      }
+      // if (!this.destinationExcelNameHolder?.code) {
+      //   alert('Please select the destination excel name holder');
+      //   return;
+      // }
+      console.log({appId: this.destinationApp?.appId});
+
+      await this.addLookupField(this.destinationApp?.appId);
 
       const config = {
         mapperList: JSON.stringify(this.mapperList),
@@ -95,8 +131,6 @@ export const useConfigStore = defineStore({
           // eslint-disable-next-line no-undef
           window.location.href = '../../flow?app=' + kintone.app.getId();
         });
-      } else {
-        alert('not in kintone env');
       }
     },
     setDestinationApp(app) {

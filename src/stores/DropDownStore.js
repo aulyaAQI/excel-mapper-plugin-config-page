@@ -1,23 +1,9 @@
 import {defineStore} from 'pinia';
-import {KintoneRestAPIClient} from '@kintone/rest-api-client';
+import {generateClient} from '@/helper/kintone';
 
-const baseUrl = import.meta.env.VITE_KINTONE_BASE_URL;
-console.log({baseUrl});
 // eslint-disable-next-line no-undef
 const thisAppId = typeof kintone === 'undefined' ? 6 : kintone.app.getId();
-
-const clientOpt =
-  typeof kintone === 'undefined'
-    ? {
-        baseUrl,
-        auth: {
-          username: import.meta.env.VITE_KINTONE_USERNAME,
-          password: import.meta.env.VITE_KINTONE_PASSWORD,
-        },
-      }
-    : {};
-
-const client = new KintoneRestAPIClient(clientOpt);
+const client = generateClient();
 
 export const useDropDownStore = defineStore({
   id: 'dropdown',

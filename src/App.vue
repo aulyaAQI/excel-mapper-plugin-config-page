@@ -20,6 +20,7 @@ const {
   destinationExcelNameHolder,
   hasConfig,
   editMode,
+  formReadOnly,
 } = storeToRefs(configStore);
 const {fields, apps, sourceAttachmentFields, excelTemplateCells, isEmptyExcelTemplateCells} = storeToRefs(dropDownStore);
 
@@ -39,7 +40,9 @@ onMounted(() => {
   dropDownStore.fetchDropDownApps();
   dropDownStore.fetchDropDownAttachmentFields();
 
-  if (typeof kintone !== 'undefined') {
+  console.log(hasConfig.value);
+
+  if (hasConfig.value) {
     // eslint-disable-next-line no-undef
     const config = kintone.plugin.app.getConfig(kintone.$PLUGIN_ID);
     console.log({config});
@@ -89,61 +92,78 @@ watch(destinationApp, (newVal, oldVal) => {
     <div class="row mb-3">
       <div class="col">
         <div class="card mb-3">
-          <div class="card-header">Plugin Settings</div>
-          <div class="card-body">
-            <p>
-              This plugin is intended to be used to import data from an Excel file to a Kintone app. The plugin will map the data from the Excel file
-              to the fields in the Kintone app.
-            </p>
-            <p>Important notes:</p>
-            <ul>
-              <li>
-                You need to create a new field in the destination app to store the (source's Record Number) from the source app (preferably a lookup
-                field).
-              </li>
-              <li>You need to create a new field in the destination app to store the reference (Excel's file name).</li>
-              <li>You need to have a field in the source app to store the Excel file as an attachment.</li>
-              <li>The uploaded file should be in .xlsx format.</li>
-            </ul>
-            <p>Steps to use the plugin:</p>
-            <ol>
-              <li>Select the destination app where the data will be imported.</li>
-              <li>Select the attachment field in the source app where the Excel files will be uploaded.</li>
-              <li>
-                Select the reference field in the destination app to store the ID of source app. It is recommended for you to create a new field in
-                the destination app to store the reference from the source app (preferably a lookup field).
-              </li>
-              <li>Select the reference field in the destination app that will be used to store the reference from the Excel file.</li>
-              <li>Upload an Excel file template that will be used to map the fields in the Excel file to the fields in the destination app.</li>
-              <li>Map the fields from the Excel file to the fields in the destination app. For each field, specify the following:</li>
-              <ul>
-                <li>Map to field in the destination app.</li>
-                <li>Map from cells in the Excel file.</li>
-                <li>
-                  For table fields, specify the Map From and Map Until fields. Note that for the Map Until field, the value should be range of cells
-                  right below the Map From cell (in the same row).
-                </li>
-                <li>
-                  For value from excel's cell that needs to be split, check the Split checkbox and specify the Start Line and End Line. The split will
-                  be based on the new line character.
-                </li>
-                <li>Preview the data that will be imported to the destination app according to the Excel file you have uploaded.</li>
-                <li>Click the "+" button to add a new mapper. Click the "-" button to remove the mapper.</li>
-              </ul>
-              <li>Click the "Save" button to save the configuration.</li>
-            </ol>
-            <p>
-              The plugin will then be available in the source app to import the data from the Excel files to the destination app according to the
-              configuration.
-            </p>
+          <div class="accordion" id="accordionExample">
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="headingOne">
+                <button
+                  class="accordion-button"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapseOne"
+                  aria-expanded="true"
+                  aria-controls="collapseOne"
+                >
+                  Plugin Settings
+                </button>
+              </h2>
+              <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+                <div class="accordion-body">
+                  <p>
+                    This plugin is intended to be used to import data from an Excel file to a Kintone app. The plugin will map the data from the Excel
+                    file to the fields in the Kintone app.
+                  </p>
+                  <p>Important notes:</p>
+                  <ul>
+                    <li>
+                      You need to create a new field in the destination app to store the (source's Record Number) from the source app (preferably a
+                      lookup field).
+                    </li>
+                    <li>You need to create a new field in the destination app to store the reference (Excel's file name).</li>
+                    <li>You need to have a field in the source app to store the Excel file as an attachment.</li>
+                    <li>The uploaded file should be in .xlsx format.</li>
+                  </ul>
+                  <p>Steps to use the plugin:</p>
+                  <ol>
+                    <li>Select the destination app where the data will be imported.</li>
+                    <li>Select the attachment field in the source app where the Excel files will be uploaded.</li>
+                    <li>
+                      Select the reference field in the destination app to store the ID of source app. It is recommended for you to create a new field
+                      in the destination app to store the reference from the source app (preferably a lookup field).
+                    </li>
+                    <li>Select the reference field in the destination app that will be used to store the reference from the Excel file.</li>
+                    <li>Upload an Excel file template that will be used to map the fields in the Excel file to the fields in the destination app.</li>
+                    <li>Map the fields from the Excel file to the fields in the destination app. For each field, specify the following:</li>
+                    <ul>
+                      <li>Map to field in the destination app.</li>
+                      <li>Map from cells in the Excel file.</li>
+                      <li>
+                        For table fields, specify the Map From and Map Until fields. Note that for the Map Until field, the value should be range of
+                        cells right below the Map From cell (in the same row).
+                      </li>
+                      <li>
+                        For value from excel's cell that needs to be split, check the Split checkbox and specify the Start Line and End Line. The
+                        split will be based on the new line character.
+                      </li>
+                      <li>Preview the data that will be imported to the destination app according to the Excel file you have uploaded.</li>
+                      <li>Click the "+" button to add a new mapper. Click the "-" button to remove the mapper.</li>
+                    </ul>
+                    <li>Click the "Save" button to save the configuration.</li>
+                  </ol>
+                  <p>
+                    The plugin will then be available in the source app to import the data from the Excel files to the destination app according to
+                    the configuration.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
           <div class="card-footer">
             <div d-flex flex-row>
-              <button type="button" class="btn btn-primary action-button" @click.prevent="configStore.saveConfig()">Save</button>
+              <button type="button" class="btn btn-primary action-button" @click.prevent="configStore.saveConfig" v-if="!formReadOnly">Save</button>
               <button type="button" class="btn btn-info action-button ms-2" @click.prevent="configStore.toggleEditMode" v-if="hasConfig">
                 {{ configStore.editMode ? 'Cancel Edit' : 'Edit' }}
               </button>
-              <button type="button" class="btn btn-secondary action-button ms-2" @click.prevent="() => history.back()">Cancel</button>
+              <button type="button" class="btn btn-secondary action-button ms-2" @click.prevent="configStore.redirectToSettingsPage">Cancel</button>
             </div>
           </div>
         </div>
@@ -167,7 +187,7 @@ watch(destinationApp, (newVal, oldVal) => {
                       label="label"
                       placeholder="Select App"
                       :loading="apps.isLoading"
-                      :disabled="apps.isLoading || (!editMode && hasConfig)"
+                      :disabled="apps.isLoading || formReadOnly"
                       :showLabels="false"
                     ></Multiselect>
                   </div>
@@ -184,7 +204,7 @@ watch(destinationApp, (newVal, oldVal) => {
             </div>
             <div class="row mb-3">
               <div class="col-sm-6">
-                <!-- :disabled="fields.isLoading || (!editMode && hasConfig) || !destinationApp?.appId" -->
+                <!-- :disabled="fields.isLoading || formReadOnly || !destinationApp?.appId" -->
                 <label for="select-destinationReference" class="form-label">Destination Reference Holder (Key)</label>
                 <Multiselect
                   id="select-destinationReference"
@@ -194,7 +214,7 @@ watch(destinationApp, (newVal, oldVal) => {
                   label="label"
                   :loading="fields.isLoading"
                   :showLabels="false"
-                  placeholder="This field will be added to destination application."
+                  placeholder="Select Field."
                   disabled
                 ></Multiselect>
               </div>
@@ -224,7 +244,7 @@ watch(destinationApp, (newVal, oldVal) => {
                   label="label"
                   :loading="fields.isLoading"
                   :showLabels="false"
-                  placeholder="This field will be added to destination application."
+                  placeholder="Select Field"
                   disabled
                 ></Multiselect>
               </div>
@@ -257,7 +277,7 @@ watch(destinationApp, (newVal, oldVal) => {
                       label="label"
                       placeholder="Select Attachment Field"
                       :loading="sourceAttachmentFields.isLoading"
-                      :disabled="sourceAttachmentFields.isLoading || (!editMode && hasConfig)"
+                      :disabled="sourceAttachmentFields.isLoading || formReadOnly"
                       :showLabels="false"
                     ></Multiselect>
                   </div>
@@ -331,7 +351,7 @@ watch(destinationApp, (newVal, oldVal) => {
                 trackBy="code"
                 label="label"
                 :loading="fields.isLoading"
-                :disabled="fields.isLoading || (!editMode && hasConfig)"
+                :disabled="fields.isLoading || formReadOnly"
                 :showLabels="false"
               ></Multiselect>
             </td>
@@ -351,7 +371,7 @@ watch(destinationApp, (newVal, oldVal) => {
                 trackBy="cellAddress"
                 label="label"
                 :loading="excelTemplateCells.isLoading"
-                :disabled="excelTemplateCells.isLoading || isEmptyExcelTemplateCells || (!editMode && hasConfig)"
+                :disabled="excelTemplateCells.isLoading || isEmptyExcelTemplateCells || formReadOnly"
                 :showLabels="false"
               ></Multiselect>
             </td>
@@ -362,7 +382,7 @@ watch(destinationApp, (newVal, oldVal) => {
                 trackBy="cellAddress"
                 label="label"
                 :loading="excelTemplateCells.isLoading"
-                :disabled="excelTemplateCells.isLoading || isEmptyExcelTemplateCells || !mapper.isTableField || (!editMode && hasConfig)"
+                :disabled="excelTemplateCells.isLoading || isEmptyExcelTemplateCells || !mapper.isTableField || formReadOnly"
                 :showLabels="false"
               ></Multiselect>
             </td>
@@ -371,20 +391,20 @@ watch(destinationApp, (newVal, oldVal) => {
                 class="form-check-input big-checkbox"
                 type="checkbox"
                 v-model="mapper.split"
-                :disabled="!mapper.mapFrom?.cellAddress || (!editMode && hasConfig)"
+                :disabled="!mapper.mapFrom?.cellAddress || formReadOnly"
               />
             </td>
             <td>
-              <input class="form-control" type="number" v-model="mapper.startLine" :disabled="!mapper.split || (!editMode && hasConfig)" />
+              <input class="form-control" type="number" v-model="mapper.startLine" :disabled="!mapper.split || formReadOnly" />
             </td>
             <td>
-              <input class="form-control" type="number" v-model="mapper.endLine" :disabled="!mapper.split || (!editMode && hasConfig)" />
+              <input class="form-control" type="number" v-model="mapper.endLine" :disabled="!mapper.split || formReadOnly" />
             </td>
             <td>
               <textarea class="form-control" rows="8" cols="28" :value="configStore.getPreview(mapper)" disabled></textarea>
             </td>
             <td class="col-hollow">
-              <div class="d-flex flex-row text-center" style="text-align: end">
+              <div class="d-flex flex-row text-center" style="text-align: end" v-if="!formReadOnly">
                 <a class="action" data-toggle="tooltip" data-placement="top" title="Add mapper">
                   <font-awesome-icon icon="fa-solid fa-circle-plus" size="lg" @click.prevent="configStore.addMapper()" />
                 </a>

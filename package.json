@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "copy": "xcopy dist\\config.js ..\\excel-mapper-plugin\\src\\js\\config.js /Y",
+    "build-copy": "npm run build && npm run copy"
   },
   "dependencies": {
     "@fortawesome/free-brands-svg-icons": "^6.5.2",

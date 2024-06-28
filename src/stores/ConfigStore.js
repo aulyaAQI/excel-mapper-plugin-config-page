@@ -26,11 +26,37 @@ export const useConfigStore = defineStore({
     destinationReferenceHolder: null,
     destinationExcelNameHolder: null,
     mapperList: [getDefaultMapObject()],
-    //
-    hasConfig: false,
     editMode: false,
   }),
+  getters: {
+    isKintoneEnvironment() {
+      return typeof kintone !== 'undefined';
+    },
+    hasConfig(state) {
+      console.log(this.isKintoneEnvironment);
+      if (this.isKintoneEnvironment) {
+        // eslint-disable-next-line no-undef
+        const config = kintone.plugin.app.getConfig(kintone.$PLUGIN_ID);
+
+        return !this.isEmpty(config);
+      }
+
+      return false;
+    },
+    formReadOnly(state) {
+      return !state.editMode && this.hasConfig;
+    },
+  },
   actions: {
+    isEmpty(obj) {
+      for (const prop in obj) {
+        if (Object.hasOwn(obj, prop)) {
+          return false;
+        }
+      }
+
+      return true;
+    },
     addMapper() {
       this.mapperList.push(getDefaultMapObject());
     },
@@ -57,38 +83,6 @@ export const useConfigStore = defineStore({
         parentTable: field.parentTable,
       }));
     },
-    async addLookupField(destinationAppId) {
-      const client = generateClient();
-      console.log('yo');
-
-      if (!destinationAppId) return;
-
-      // eslint-disable-next-line no-undef
-      const sourceAppId = typeof kintone !== 'undefined' ? kintone.app.getId() : 6;
-
-      console.log({destinationAppId, sourceAppId});
-      const addLookupField = await client.app.addFormFields({
-        app: destinationAppId,
-        properties: {
-          Source_Record_Number_Plugin_Excel_Mapper_Generated: {
-            label: 'Source Record Number (plugin Excel Mapper generated)',
-            code: 'Source_Record_Number_Plugin_Excel_Mapper_Generated',
-            type: 'SINGLE_LINE_TEXT',
-          },
-        },
-      });
-
-      const deployApp = await client.app.deployApp({
-        apps: [
-          {
-            app: destinationAppId,
-          },
-        ],
-      });
-
-      console.log({addLookupField});
-      console.log({deployApp});
-    },
     async saveConfig() {
       if (!this.destinationApp?.appId) {
         alert('Please select the destination app');
@@ -100,18 +94,22 @@ export const useConfigStore = defineStore({
         return;
       }
 
-      // if (!this.destinationReferenceHolder?.code) {
-      //   alert('Please select the destination reference holder');
-      //   return;
-      // }
+      if (!this.destinationReferenceHolder?.code) {
+        alert('Please select the destination reference holder');
+        return;
+      }
 
-      // if (!this.destinationExcelNameHolder?.code) {
-      //   alert('Please select the destination excel name holder');
-      //   return;
-      // }
-      console.log({appId: this.destinationApp?.appId});
+      if (!this.destinationExcelNameHolder?.code) {
+        alert('Please select the destination excel name holder');
+        return;
+      }
 
-      await this.addLookupField(this.destinationApp?.appId);
+      const checkEmptyMapToFieldAndMapFromField = this.mapperList.some((mapper) => !mapper.mapTo || !mapper.mapFrom);
+
+      if (checkEmptyMapToFieldAndMapFromField) {
+        alert('Please fill all the map to and map from fields');
+        return;
+      }
 
       const config = {
         mapperList: JSON.stringify(this.mapperList),
@@ -124,13 +122,9 @@ export const useConfigStore = defineStore({
 
       console.log({config});
 
-      if (typeof kintone !== 'undefined') {
+      if (this.isKintoneEnvironment) {
         // eslint-disable-next-line no-undef
-        kintone.plugin.app.setConfig(config, () => {
-          alert('The plug-in settings have been saved. Please update the app!');
-          // eslint-disable-next-line no-undef
-          window.location.href = '../../flow?app=' + kintone.app.getId();
-        });
+        await kintone.plugin.app.setConfig(config);
       }
     },
     setDestinationApp(app) {
@@ -190,6 +184,7 @@ export const useConfigStore = defineStore({
       }
 
       if (split) {
+        if (!mapFrom?.cellValue) return '';
         const splitString = mapFrom?.cellValue.split('\n');
 
         let joinString = splitString.slice(startLine - 1).join('\n');
@@ -217,6 +212,12 @@ export const useConfigStore = defineStore({
     },
     toggleEditMode() {
       this.editMode = !this.editMode;
+    },
+    redirectToSettingsPage() {
+      if (this.isKintoneEnvironment) {
+        // eslint-disable-next-line no-undef
+        window.location.href = `../../flow?app=${kintone.app.getId()}`;
+      }
     },
   },
 });
